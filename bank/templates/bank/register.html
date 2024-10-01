@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+{% load form_filters %}
+<div class="container mt-5">
+    <h2>Register</h2>
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-12">
+            <label for="username">Username</label>
+            {{ form.username|add_class:"form-control" }}
+        </div>
+        <div class="col-12">
+            <label for="email">Email</label>
+            {{ form.email|add_class:"form-control" }}
+        </div>
+        <div class="col-12">
+            <label for="password1">Password</label>
+            {{ form.password1|add_class:"form-control" }}
+        </div>
+        <div class="col-12">
+            <label for="password2">Confirm Password</label>
+            {{ form.password2|add_class:"form-control" }}
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Register</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

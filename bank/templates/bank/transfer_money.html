@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Transfer Money</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="to_account" class="form-label">To Account:</label>
+            <input type="text" name="to_account" id="to_account" class="form-control" required>
+            <!-- Added Bootstrap class -->
+        </div>
+        <div class="mb-3">
+            <label for="amount" class="form-label">Amount:</label>
+            <input type="number" name="amount" id="amount" class="form-control" required> <!-- Added Bootstrap class -->
+        </div>
+        <button type="submit" class="btn btn-primary">Transfer</button>
+    </form>
+</div>
+{% endblock %}

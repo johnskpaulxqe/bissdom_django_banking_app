@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Pay a Bill{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if account %}
+    <h2>Pay a Bill</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="payee" class="form-label">Choose a Payee:</label>
+            <select name="payee_id" id="payee" class="form-select" required>
+                {% for payee in payees %}
+                <option value="{{ payee.id }}">{{ payee.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="amount" class="form-label">Amount:</label>
+            <input type="number" name="amount" id="amount" class="form-control" step="0.01" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Pay</button>
+    </form>
+    {% else %}
+    <h2>No account found. Please contact support to set up your account.</h2>
+    {% endif %}
+
+    {% if error %}
+    <p class="text-danger">{{ error }}</p>
+    {% endif %}
+</div>
+{% endblock %}
