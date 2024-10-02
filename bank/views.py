@@ -5,6 +5,8 @@ from django.contrib.auth import login, authenticate
 from .models import Account, Transaction, Payee, BillPayment
 from django.contrib.auth import logout as auth_logout
 from .forms import RegisterForm
+import random
+import string
 
 def home(request):
     return render(request, 'bank/home.html')
@@ -12,15 +14,13 @@ def home(request):
 # Account Balance View
 @login_required
 def account_balance(request):
-    # Attempt to retrieve the account and transactions for the logged-in user
-    account = Account.objects.filter(user=request.user).first()
+    # Get all accounts for the logged-in user
+    accounts = Account.objects.filter(user=request.user)
     
-    if account:
-        transactions = Transaction.objects.filter(account=account).order_by('-timestamp')  # Order transactions by date, most recent first
-    else:
-        transactions = []  # No transactions if the account does not exist
+    # Retrieve transactions for each account
+    transactions = {account: Transaction.objects.filter(account=account).order_by('-timestamp') for account in accounts}
 
-    return render(request, 'bank/account_balance.html', {'account': account, 'transactions': transactions})
+    return render(request, 'bank/account_balance.html', {'accounts': accounts, 'transactions': transactions})
 
 # Transfer Money (Internal and External)
 @login_required
@@ -54,42 +54,63 @@ def add_payee(request):
 # Pay a Bill
 @login_required
 def pay_bill(request):
-    try:
-        account = Account.objects.get(user=request.user)
-    except Account.DoesNotExist:
-        # Handle the case where the account doesn't exist for the logged-in user
+    # Retrieve all accounts for the logged-in user
+    accounts = Account.objects.filter(user=request.user)
+
+    # Handle the case where no accounts exist
+    if not accounts.exists():
         account = None
+    else:
+        account = accounts.first()  # You could also choose to leave this as None
 
     # Logic to process payees and bill payments
     if request.method == 'POST':
         payee_id = request.POST.get('payee_id')
+        account_id = request.POST.get('account_id')  # Get selected account ID
         amount = request.POST.get('amount')
+
         try:
             payee = Payee.objects.get(id=payee_id)
-            # Assuming you have a BillPayment model to handle the payment process
+            account = Account.objects.get(id=account_id)  # Retrieve the selected account
             BillPayment.objects.create(account=account, payee=payee, amount=amount)
-            # Redirect to a success page or display a success message
             return redirect('bill_payment_success')
         except Payee.DoesNotExist:
-            # Handle the case where the payee does not exist
-            return render(request, 'bank/pay_bill.html', {'error': 'Payee does not exist.'})
+            return render(request, 'bank/pay_bill.html', {'error': 'Payee does not exist.', 'accounts': accounts, 'payees': Payee.objects.all()})
 
     # Assuming you have Payees stored in the database
     payees = Payee.objects.all()
-    return render(request, 'bank/pay_bill.html', {'account': account, 'payees': payees})
+    return render(request, 'bank/pay_bill.html', {'account': account, 'payees': payees, 'accounts': accounts})
+
 
 # User Registration View
+def generate_account_number():
+    return ''.join(random.choices(string.digits, k=10))  # Generates a random 10-digit account number
+
 def register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
-            Account.objects.create(user=user, balance=500.00) 
+            # Create checking account
+            checking_account = Account.objects.create(
+                user=user,
+                account_type='checking',
+                balance=4500.00,
+                account_number=generate_account_number()
+            )
+            # Create savings account
+            savings_account = Account.objects.create(
+                user=user,
+                account_type='savings',
+                balance=500.00,
+                account_number=generate_account_number()
+            )
             login(request, user)
             return redirect('home')
     else:
         form = RegisterForm()
     return render(request, 'bank/register.html', {'form': form})
+
 
 # User Logout View
 @login_required

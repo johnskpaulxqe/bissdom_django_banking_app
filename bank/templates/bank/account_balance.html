@@ -1,25 +1,32 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}
-{% if account %}
-Account Balance: {{ account.balance }}
-{% else %}
-No Account Found
-{% endif %}
+Account Balances
 {% endblock %}
 
 {% block content %}
 <div class="container">
-    {% if account %}
-    <h3>Account Balance: {{ account.balance }}</h3>
-    <h4>Recent Transactions:</h4>
+    <h2>Your Accounts</h2>
+    {% if accounts %}
     <ul class="list-group">
-        {% for transaction in transactions %}
+        {% for account in accounts %}
         <li class="list-group-item">
-            {{ transaction.timestamp }} - {{ transaction.amount }} ({{ transaction.transaction_type|capfirst }})
+            <h4>Account Type: {{ account.account_type }}</h4>
+            <p>Account Number: {{ account.account_number }}</p>
+            <p>Account Balance: ${{ account.balance }}</p>
+            <h5>Recent Transactions:</h5>
+            <ul>
+                {% for transaction in transactions|get:account %}
+                <li>
+                    {{ transaction.timestamp }} - ${{ transaction.amount }} ({{ transaction.transaction_type|capfirst
+                    }})
+                </li>
+                {% empty %}
+                <li>No transactions available.</li>
+                {% endfor %}
+            </ul>
         </li>
-        {% empty %}
-        <li class="list-group-item">No transactions available.</li>
         {% endfor %}
     </ul>
     {% else %}
