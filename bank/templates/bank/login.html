@@ -5,16 +5,23 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<h2>Login</h2>
-<form method="post">
-    {% csrf_token %}
-    <div class="mb-3">
-        {{ form.username|add_class:"form-control" }}
-    </div>
-    <div class="mb-3">
-        {{ form.password|add_class:"form-control" }}
-    </div>
-    <button type="submit" class="btn btn-primary">Login</button>
-</form>
-<p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+<div class="container">
+    <h2>Login</h2>
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="username" class="form-label">Username:</label>
+            <input type="text" name="username" id="username" class="form-control" required>
+            <!-- Added Bootstrap class -->
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password:</label>
+            <input type="password" name="password" id="password" class="form-control" required>
+            <!-- Added Bootstrap class -->
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+
+    <p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+</div>
 {% endblock %}
