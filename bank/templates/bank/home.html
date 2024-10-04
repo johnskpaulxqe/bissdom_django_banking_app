@@ -6,7 +6,11 @@
 
 {% block content %}
 <div class="container">
-    <h1>Welcome to Bissdom Bank</h1>
+    {% if user.is_authenticated %}
+    <p>Hello, {{ user.username }}!</p>
+    {% endif %}
+    <h4>Welcome to </h4>
+    <h1>Bissdom Bank</h1>
 
     <!-- Check if user is authenticated -->
     <!-- {% if user.is_authenticated %}

@@ -11,4 +11,7 @@ urlpatterns = [
     path('transfer_money/', views.transfer_money, name='transfer_money'),
     path('add_payee/', views.add_payee, name='add_payee'),
     path('pay_bill/', views.pay_bill, name='pay_bill'),
+    path('bill_payment_success/', views.bill_payment_success, name='bill_payment_success'),
+    path('api/add_funds/', views.AddFundsAPIView.as_view(), name='add_funds_api'),
+    path('api/token/', views.CustomAuthToken.as_view(), name='api_token'),
 ]

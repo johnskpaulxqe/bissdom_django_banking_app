@@ -7,26 +7,27 @@ Account Balances
 
 {% block content %}
 <div class="container">
-    <h2>Your Accounts</h2>
+    <h2>My Accounts</h2>
     {% if accounts %}
     <ul class="list-group">
         {% for account in accounts %}
         <li class="list-group-item">
             <h4>Account Type: {{ account.account_type }}</h4>
             <p>Account Number: {{ account.account_number }}</p>
-            <p>Account Balance: ${{ account.balance }}</p>
+            <p>Initial Balance: {{account.initial_balance}}</p>
+            <p>Account Balance: ${{ account.balance|floatformat:2 }}</p>
             <h5>Recent Transactions:</h5>
             <ul>
-                {% for transaction in transactions|get:account %}
+                {% for transaction in account.transaction_set.all %}
                 <li>
-                    {{ transaction.timestamp }} - ${{ transaction.amount }} ({{ transaction.transaction_type|capfirst
-                    }})
+                    {{ transaction.timestamp }} - ${{ transaction.amount }} ({{ transaction.get_friendly_name }})
                 </li>
                 {% empty %}
                 <li>No transactions available.</li>
                 {% endfor %}
             </ul>
         </li>
+
         {% endfor %}
     </ul>
     {% else %}
