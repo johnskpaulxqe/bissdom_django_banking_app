@@ -3,18 +3,125 @@
 {% block content %}
 <div class="container">
     <h1>Transfer Money</h1>
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
     <form method="post">
         {% csrf_token %}
         <div class="mb-3">
-            <label for="to_account" class="form-label">To Account:</label>
-            <input type="text" name="to_account" id="to_account" class="form-control" required>
-            <!-- Added Bootstrap class -->
+            <label for="from_account" class="form-label">Transfer From:</label>
+            <select name="from_account" id="from_account" class="form-control" required>
+                <option value="">Select Account</option>
+                {% for account in accounts %}
+                <option value="{{ account.id }}">
+                    {{ account.account_type }} -
+                    {{ account.account_number }}
+                    (Balance: {{ account.balance }})
+                </option>
+                {% endfor %}
+            </select>
         </div>
+
+        <div class="mb-3">
+            <label for="to_account" class="form-label">Transfer To:</label>
+            <select name="to_account" id="to_account" class="form-control" required>
+                <option value="">Select Account</option>
+                {% for account in accounts %}
+                <option value="{{ account.id }}">
+                    {{ account.account_type }} -
+                    {{ account.account_number }}
+                    (Balance: {{ account.balance }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
         <div class="mb-3">
             <label for="amount" class="form-label">Amount:</label>
-            <input type="number" name="amount" id="amount" class="form-control" required> <!-- Added Bootstrap class -->
+            <input type="number" name="amount" id="amount" class="form-control" required>
+            <div id="error-message" class="text-danger mt-1" style="display: none;">Insufficient balance</div>
         </div>
-        <button type="submit" class="btn btn-primary">Transfer</button>
+
+        <button type="submit" class="btn btn-primary" id="submit-btn" disabled>Transfer</button>
     </form>
 </div>
+
+<script>
+    const fromAccountSelect = document.getElementById('from_account');
+    const toAccountSelect = document.getElementById('to_account');
+    const amountInput = document.getElementById('amount');
+    const errorMessage = document.getElementById('error-message');
+    const submitBtn = document.getElementById('submit-btn');
+
+    // Function to disable corresponding options in dropdowns
+    function disableCorrespondingOptions(fromId, toId) {
+        // Enable all options first
+        Array.from(fromAccountSelect.options).forEach(option => option.disabled = false);
+        Array.from(toAccountSelect.options).forEach(option => option.disabled = false);
+
+        // Disable the selected 'from' account in 'to_account'
+        if (fromId) {
+            const toOptionToDisable = toAccountSelect.querySelector(`option[value="${fromId}"]`);
+            if (toOptionToDisable) {
+                toOptionToDisable.disabled = true;
+            }
+        }
+
+        // Disable the selected 'to' account in 'from_account'
+        if (toId) {
+            const fromOptionToDisable = fromAccountSelect.querySelector(`option[value="${toId}"]`);
+            if (fromOptionToDisable) {
+                fromOptionToDisable.disabled = true;
+            }
+        }
+    }
+
+    // Event listener for 'from_account' select
+    fromAccountSelect.addEventListener('change', function () {
+        disableCorrespondingOptions(fromAccountSelect.value, toAccountSelect.value);
+        clearValidation();
+    });
+
+    // Event listener for 'to_account' select
+    toAccountSelect.addEventListener('change', function () {
+        disableCorrespondingOptions(fromAccountSelect.value, toAccountSelect.value);
+        clearValidation();
+    });
+
+    // Event listener for the 'amount' input
+    amountInput.addEventListener('input', function () {
+        validateAmount();
+    });
+
+    // Function to clear validation messages and disable the submit button initially
+    function clearValidation() {
+        errorMessage.style.display = 'none';
+        submitBtn.disabled = true;
+    }
+
+    // Function to validate the transfer amount
+    function validateAmount() {
+        const fromAccountId = fromAccountSelect.value;
+        const amount = parseFloat(amountInput.value);
+
+        if (fromAccountId && amount > 0) {
+            const selectedAccount = Array.from(fromAccountSelect.options).find(option => option.value === fromAccountId);
+            const balanceText = selectedAccount.textContent.match(/\(Balance: ([\d.]+)\)/);
+            const balance = parseFloat(balanceText[1]);
+
+            // Show error message if amount is greater than balance
+            if (amount > balance) {
+                errorMessage.style.display = 'block';
+                submitBtn.disabled = true;
+            } else {
+                errorMessage.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+    }
+</script>
 {% endblock %}

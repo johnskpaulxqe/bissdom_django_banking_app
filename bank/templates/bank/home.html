@@ -1,39 +1,105 @@
 {% extends 'base.html' %}
-
 {% load form_filters %} <!-- Load the custom filter library -->
 
 {% block title %}Home{% endblock %}
 
 {% block content %}
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Arial', sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    .header {
+        background-color: #077b8d;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        border-bottom: 5px solid #0056b3;
+    }
+
+    .welcome-message {
+        margin-top: 20px;
+        font-size: 24px;
+        text-align: center;
+        color: #343a40;
+    }
+
+    .bank-name {
+        font-size: 48px;
+        font-weight: bold;
+        text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        margin: 20px 0;
+    }
+
+    .decorative-border {
+        border: 2px solid #007bff;
+        border-radius: 10px;
+        padding: 20px;
+        background-color: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin: 20px auto;
+        max-width: 600px;
+    }
+
+    .feature-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 20px 0;
+    }
+
+    .feature-list li {
+        margin: 15px 0;
+        font-size: 18px;
+        background-color: #e9ecef;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s;
+    }
+
+    .feature-list li:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .footer {
+        margin-top: 40px;
+        padding: 10px;
+        text-align: center;
+        background-color: #077b8d;
+        color: white;
+    }
+</style>
+
+<div class="header">
+    <h4>Welcome to</h4>
+    <h1 class="bank-name">Bissdom Bank</h1>
+</div>
+
 <div class="container">
     {% if user.is_authenticated %}
-    <p>Hello, {{ user.username }}!</p>
-    {% endif %}
-    <h4>Welcome to </h4>
-    <h1>Bissdom Bank</h1>
-
-    <!-- Check if user is authenticated -->
-    <!-- {% if user.is_authenticated %}
-    <p>Hello, {{ user.username }}!</p>
-    <p><a href="{% url 'logout' %}">Logout</a></p>
+    <p class="welcome-message">Hello, {{ user.username }}!</p>
     {% else %}
-    <h2>Login</h2>
-    <form method="post" action="{% url 'login' %}">
-        {% csrf_token %}
-        <div class="mb-3">
-            <label for="username" class="form-label">Username:</label>
-            <input type="text" name="username" id="username" class="form-control" required> -->
-    <!-- Added Bootstrap class -->
-    <!-- </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Password:</label>
-            <input type="password" name="password" id="password" class="form-control" required> -->
-    <!-- Added Bootstrap class -->
-    <!-- </div>
-        <button type="submit" class="btn btn-primary">Login</button>
-    </form>
+    <p class="welcome-message">Join us today and experience banking like never before!</p>
+    {% endif %}
 
-    <p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
-    {% endif %} -->
+    <div class="decorative-border">
+        <h3>Our Services</h3>
+        <ul class="feature-list">
+            <li>✔️ Online Banking - Manage your finances anytime, anywhere.</li>
+            <li>✔️ Instant Transfers - Send and receive money with ease.</li>
+            <li>✔️ Bill Payments - Pay your bills in a few clicks.</li>
+            <li>✔️ Savings Accounts - Grow your wealth effortlessly.</li>
+            <li>✔️ Customer Support - We are here to help you 24/7.</li>
+        </ul>
+    </div>
 </div>
+
+<div class="footer">
+    <p>&copy; 2024 Bissdom Bank. All rights reserved.</p>
+</div>
+
 {% endblock %}

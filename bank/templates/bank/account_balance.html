@@ -14,20 +14,58 @@ Account Balances
         <li class="list-group-item">
             <h4>Account Type: {{ account.account_type }}</h4>
             <p>Account Number: {{ account.account_number }}</p>
-            <p>Initial Balance: {{account.initial_balance}}</p>
+            <p>Initial Balance: {{ account.initial_balance }}</p>
             <p>Account Balance: ${{ account.balance|floatformat:2 }}</p>
             <h5>Recent Transactions:</h5>
             <ul>
-                {% for transaction in account.transaction_set.all %}
+                {% for transaction in account.transaction_set.all|slice:":5" %}
                 <li>
-                    {{ transaction.timestamp }} - ${{ transaction.amount }} ({{ transaction.get_friendly_name }})
+                    {{ transaction.timestamp }}
+                    - ${{ transaction.amount }}
+                    ({{ transaction.get_friendly_name }})
                 </li>
                 {% empty %}
                 <li>No transactions available.</li>
                 {% endfor %}
             </ul>
-        </li>
 
+            {% if account.transaction_set.count > 5 %}
+            <button type="button" class="btn btn-link" data-bs-toggle="modal"
+                data-bs-target="#transactionModal{{ account.id }}">
+                View Transactions
+            </button>
+
+            <!-- Modal -->
+            <div class="modal fade" id="transactionModal{{ account.id }}" tabindex="-1"
+                aria-labelledby="transactionModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="transactionModalLabel">All Transactions for
+                                {{ account.account_number }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                            <ul class="list-group">
+                                {% for transaction in account.transaction_set.all %}
+                                <li class="list-group-item">
+                                    {{ transaction.timestamp }} -
+                                    ${{ transaction.amount }}
+                                    ({{ transaction.get_friendly_name }})
+                                </li>
+                                {% empty %}
+                                <li>No transactions available.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </li>
         {% endfor %}
     </ul>
     {% else %}

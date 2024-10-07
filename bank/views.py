@@ -5,8 +5,8 @@ from django.contrib.auth import login, authenticate
 from .models import Account, Transaction, Payee, BillPayment
 from django.contrib.auth import logout as auth_logout
 from .forms import RegisterForm
-from django.db import models
-from django.db.models import Sum, F, Case, When
+from django.db import models, transaction
+from django.db.models import Sum, F, Case, When, Q
 import random
 import string
 from .models import Account  # Make sure to import your Account model
@@ -37,7 +37,7 @@ def account_balance(request):
     for account in accounts:
         # If there are transactions, recalculate balance based on them
         if account.transaction_set.exists():
-            # Aggregate balance from transactions
+            # Aggregate balance from transactions, including debit and credit transactions
             balance = account.transaction_set.aggregate(
                 total_deposit=Sum(Case(
                     When(transaction_type='deposit', then=F('amount')),
@@ -59,16 +59,28 @@ def account_balance(request):
                     default=0,
                     output_field=models.DecimalField(),
                 )),
+                total_credit=Sum(Case(
+                    When(transaction_type='credit', then=F('amount')),
+                    default=0,
+                    output_field=models.DecimalField(),
+                )),
+                total_debit=Sum(Case(
+                    When(transaction_type='debit', then=F('amount')),
+                    default=0,
+                    output_field=models.DecimalField(),
+                )),
             )
 
             # Safeguard against None values by setting default values to 0
-            total_deposit = balance['total_deposit'] if balance['total_deposit'] is not None else 0
-            total_withdrawal = balance['total_withdrawal'] if balance['total_withdrawal'] is not None else 0
-            total_bill_payment = balance['total_bill_payment'] if balance['total_bill_payment'] is not None else 0
-            total_transfer = balance['total_transfer'] if balance['total_transfer'] is not None else 0
+            total_deposit = balance['total_deposit'] or 0
+            total_withdrawal = balance['total_withdrawal'] or 0
+            total_bill_payment = balance['total_bill_payment'] or 0
+            total_transfer = balance['total_transfer'] or 0
+            total_credit = balance['total_credit'] or 0
+            total_debit = balance['total_debit'] or 0
 
             # Recalculate balance based on transactions
-            account.balance = total_deposit - (total_withdrawal + total_bill_payment + total_transfer)
+            account.balance = total_deposit + total_credit - (total_withdrawal + total_bill_payment + total_transfer + total_debit)
         
         # Save updated balance to the account
         account.save()
@@ -80,20 +92,53 @@ def account_balance(request):
 # Transfer Money (Internal and External)
 @login_required
 def transfer_money(request):
+    accounts = Account.objects.filter(user=request.user)
+
     if request.method == 'POST':
-        from_account = Account.objects.get(user=request.user)
-        to_account = Account.objects.get(id=request.POST['to_account'])
-        amount = request.POST['amount']
-        # Deduct from sender's account
-        Transaction.objects.create(account=from_account, amount=amount, transaction_type='debit')
-        from_account.balance -= amount
-        from_account.save()
-        # Credit to receiver's account
-        Transaction.objects.create(account=to_account, amount=amount, transaction_type='credit')
-        to_account.balance += amount
-        to_account.save()
-        return redirect('account_balance')
-    return render(request, 'bank/transfer_money.html')
+        from_account_id = request.POST.get('from_account')
+        to_account_id = request.POST.get('to_account')
+        amount = request.POST.get('amount')
+
+        try:
+            # Convert amount to Decimal for precise calculations
+            amount = Decimal(amount)
+            from_account = Account.objects.get(id=from_account_id, user=request.user)
+            to_account = Account.objects.get(id=to_account_id)
+
+            # Validate the amount
+            if amount <= 0:
+                messages.error(request, 'Transfer amount must be greater than zero.')
+            elif from_account.balance < amount:
+                messages.error(request, 'Insufficient balance in the selected account.')
+            else:
+                # Use atomic transaction to ensure both debit and credit occur together
+                with transaction.atomic():
+                    # Create a debit transaction for 'from_account'
+                    Transaction.objects.create(
+                        account=from_account,
+                        transaction_type='debit',
+                        amount=amount,
+                    )
+                    # Create a credit transaction for 'to_account'
+                    Transaction.objects.create(
+                        account=to_account,
+                        transaction_type='credit',
+                        amount=amount,
+                    )
+
+                messages.success(request, 'Transfer successful!')
+
+        except Account.DoesNotExist:
+            messages.error(request, 'One of the selected accounts does not exist.')
+        except ValueError:
+            messages.error(request, 'Invalid amount entered.')
+
+        return redirect('transfer_money')
+
+    return render(request, 'bank/transfer_money.html', {
+        'accounts': accounts,
+    })
+
 
 # Add a Payee
 @login_required
